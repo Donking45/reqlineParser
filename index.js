@@ -8,6 +8,10 @@ const cors = require('cors')
 const app = express()
 app.use(cors())
 
+const PORT = process.env.PORT || 3000
+
+const MONGO_URL = process.env.MONGO_URL;
+
 
 
 require('dotenv').config(); 
@@ -16,7 +20,7 @@ app.use(express.json())
 
 
 
-app.use('/parse', reqlineRoute);
+app.use('/', reqlineRoute);
 
 // Utility to validate JSON string
 function isValidJson(str) {
@@ -97,9 +101,7 @@ function parseReqline(input) {
 }
 
 
-const PORT = process.env.PORT || 3000
 
-const MONGO_URL = process.env.MONGO_URL;
 
 
 
