@@ -1,6 +1,6 @@
 const express = require('express')
 const mongoose = require("mongoose")
-const Reqline = require('./model/reqlineModel')
+const reqlineRoute = require("./route/reqlineRoute")
 
 const port = 3000
 const cors = require('cors')
@@ -14,7 +14,7 @@ app.use(express.json())
 
 
 
-
+app.use("/parse", reqlineRoute);
 
 // Utility to validate JSON string
 function isValidJson(str) {
@@ -93,23 +93,6 @@ function parseReqline(input) {
 
   return result;
 }
-
-// Route to parse reqline
-app.post("/parse", (req, res) => {
-  const { reqline } = req.body;
-
-  if (!reqline) {
-    return res.status(400).json({ error: "Invalid HTTP method. Only GET and POST are supported" });
-  }
-
-  try {
-    const parsed = parseReqline(reqline);
-    res.json(parsed);
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-});
-
 
 
 const PORT = process.env.PORT || 3000
