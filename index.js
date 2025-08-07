@@ -1,5 +1,6 @@
 const express = require('express')
 const mongoose = require("mongoose")
+const Reqline = require('./model/reqlineModel')
 
 const port = 3000
 const cors = require('cors')
@@ -98,7 +99,7 @@ app.post("/parse", (req, res) => {
   const { reqline } = req.body;
 
   if (!reqline) {
-    return res.status(400).json({ error: "Missing 'reqline' in body" });
+    return res.status(400).json({ error: "Invalid HTTP method. Only GET and POST are supported" });
   }
 
   try {
