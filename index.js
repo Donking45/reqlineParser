@@ -8,9 +8,7 @@ const cors = require('cors')
 const app = express()
 app.use(cors())
 
-const PORT = process.env.PORT || 3000
 
-const MONGO_URL = process.env.MONGO_URL;
 
 
 
@@ -101,7 +99,9 @@ function parseReqline(input) {
 }
 
 
+const PORT = process.env.PORT || 3000
 
+const MONGO_URL = process.env.MONGO_URL;
 
 
 
