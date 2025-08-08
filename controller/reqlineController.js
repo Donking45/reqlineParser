@@ -1,96 +1,61 @@
 const Reqline = require('../model/reqlineModel')
+const axios = require('axios');
 
-// Utility to validate JSON string
-function isValidJson(str) {
-  try {
-    JSON.parse(str);
-    return true;
-  } catch {
-    return false;
-  }
-}
+const parseReqline = (reqline) => {
+  const [method, url] = reqline.trim().split(/\s+/);
+  if (!method || !url) throw new Error('Invalid reqline format');
 
-// Parser function
-function parseReqline(input) {
-  const parts = input.split(" | ");
-
-  if (parts.length < 2) {
-    throw new Error("Invalid reqline: At least HTTP and URL are required");
+  if (!['GET', 'POST'].includes(method.toUpperCase())) {
+    throw new Error('Invalid HTTP method. Only GET and POST are supported');
   }
 
-  const result = {
-    method: null,
-    url: null,
-    headers: {},
-    query: {},
-    body: {},
-  };
-
-  // Check mandatory HTTP
-  if (!parts[0].startsWith("HTTP ")) {
-    throw new Error("Reqline must start with 'HTTP [METHOD]'");
-  }
-
-  const method = parts[0].split(" ")[1];
-  if (!["GET", "POST"].includes(method)) {
-    throw new Error("Invalid HTTP method: Only GET and POST allowed");
-  }
-  result.method = method;
-
-  // Check mandatory URL
-  if (!parts[1].startsWith("URL ")) {
-    throw new Error("Second part must be 'URL [value]'");
-  }
-  result.url = parts[1].split(" ")[1];
-
-  // Process optional parts
-  for (let i = 2; i < parts.length; i++) {
-    const [keyword, value] = parts[i].split(" ", 2);
-    const jsonPart = parts[i].substring(keyword.length + 1); // full json after space
-
-    if (!isValidJson(jsonPart)) {
-      throw new Error(`Invalid JSON for ${keyword}`);
-    }
-
-    const parsedValue = JSON.parse(jsonPart);
-
-    switch (keyword) {
-      case "HEADERS":
-        result.headers = parsedValue;
-        break;
-      case "QUERY":
-        result.query = parsedValue;
-        break;
-      case "BODY":
-        result.body = parsedValue;
-        break;
-      default:
-        throw new Error(`Unknown keyword: ${keyword}`);
-    }
-  }
-
-  // Build full URL if query exists
-  if (Object.keys(result.query).length > 0) {
-    const queryParams = new URLSearchParams(result.query).toString();
-    result.url += "?" + queryParams;
-  }
-
-  return result;
-}
+  return { method: method.toUpperCase(), url };
+};
 
 const reqline = async (req, res) => {
   const { reqline } = req.body;
 
   if (!reqline) {
-    return res.status(400).json({ error: "Invalid HTTP method. Only GET and POST are supported" });
+    return res.status(400).json({ error: 'Missing reqline' });
   }
 
   try {
-    const parsed = parseReqline(reqline);
-    res.json(parsed);
-  } catch (err) {
-    res.status(400).json({ error: err.message });
+    const { method, url } = parseReqline(reqline);
+
+    const fullUrl = new URL(url);
+    const query = Object.fromEntries(fullUrl.searchParams.entries());
+
+    const request_start_timestamp = Date.now();
+
+    let responseData;
+    if (method === 'GET') {
+      responseData = await axios.get(fullUrl.href);
+    } else if (method === 'POST') {
+      responseData = await axios.post(fullUrl.href, req.body.body || {});
+    }
+
+    const request_stop_timestamp = Date.now();
+    const duration = request_stop_timestamp - request_start_timestamp;
+
+    return res.status(200).json({
+      request: {
+        query,
+        body: req.body.body || {},
+        headers: req.body.headers || {},
+        full_url: fullUrl.href,
+      },
+      response: {
+        http_status: responseData.status,
+        duration,
+        request_start_timestamp,
+        request_stop_timestamp,
+        response_data: responseData.data,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
   }
 };
+
 
 module.exports = { reqline}
