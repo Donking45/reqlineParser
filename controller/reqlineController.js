@@ -1,38 +1,43 @@
-const Reqline = require('../model/reqlineModel')
+const Reqline = require('../model/reqlineModel');
 
+const reqline = async (req, res) => {
+  const start = Date.now();
 
-const parseReqline = async (req, res) => {
-  const { reqline } = req.body;
+  const { method, url, headers, query, body: requestBody } = req.body;
 
-  const startTime = Date.now();
-
-  if (!reqline) {
-    return res.status(400).json({ error: "Request line is required" });
+  // Validate method
+  if (!['GET', 'POST'].includes(method)) {
+    return res.status(400).json({
+      error: "Invalid HTTP method. Only GET and POST are supported",
+    });
   }
 
-  const parts = reqline.trim().split(' ');
+  try {
+    // Save to DB
+    const newReqline = new Reqline({
+      method,
+      url,
+      headers,
+      query,
+      body: requestBody,
+    });
 
-  if (parts.length !== 3) {
-    return res.status(400).json({ error: "Invalid request line format" });
+    const savedReqline = await newReqline.save();
+
+    const end = Date.now();
+
+    res.status(201).json({
+      message: "Request line parsed and saved successfully",
+      data: savedReqline,
+      timestamps: {
+        createdAt: savedReqline.createdAt.getTime(),
+        updatedAt: savedReqline.updatedAt.getTime(),
+      },
+      duration: `${end - start}ms`,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
-
-  const [method, path, httpVersion] = parts;
-
-  if (!['GET', 'POST'].includes(method.toUpperCase())) {
-    return res.status(400).json({ error: "Invalid HTTP method. Only GET and POST are supported" });
-  }
-
-  const endTime = Date.now();
-
-  res.json({
-    method,
-    path,
-    httpVersion,
-    startTimestamp: startTime,
-    endTimestamp: endTime,
-    duration: endTime - startTime
-  });
 };
 
-
-module.exports = {parseReqline}
+module.exports = { reqline };
