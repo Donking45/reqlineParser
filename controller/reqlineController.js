@@ -1,47 +1,46 @@
 const Reqline = require('../model/reqlineModel')
 
 
-const parseReqline = (reqline) => {
-  const parts = reqline.trim().split(' ');
-
-  if (parts.length < 2 || parts.length > 3) {
-    throw new Error("Invalid request line format");
-  }
-
-  const method = parts[0].toUpperCase();
-  const url = parts[1];
-
-  if (!['GET', 'POST'].includes(method)) {
-    throw new Error("Invalid HTTP method. Only GET and POST are supported");
-  }
-
-  return { method, url };
-};
-
-const reqline = async (req, res) => {
+const parseReqline = (req, res) => {
   const { reqline } = req.body;
 
   if (!reqline) {
-    return res.status(400).json({ error: "Missing reqline in request body" });
+    return res.status(400).json({ error: "Request line is required" });
   }
 
-  const start = Date.now();
+  const parts = reqline.trim().split(' ');
 
-  try {
-    const parsed = parseReqline(reqline);
+  if (parts.length !== 3) {
+    return res.status(400).json({ error: "Invalid request line format" });
+  }
 
-    const duration = Date.now() - start;
-    const timestamp = Date.now(); // current time in milliseconds
+  const [method, fullUrl, httpVersion] = parts;
 
-    return res.json({
-      ...parsed,
-      duration,
-      timestamp
+  if (!['GET', 'POST'].includes(method.toUpperCase())) {
+    return res.status(400).json({ error: "Invalid HTTP method. Only GET and POST are supported" });
+  }
+
+  const [path, queryString] = fullUrl.split('?');
+  const query = {};
+
+  if (queryString) {
+    queryString.split('&').forEach(pair => {
+      const [key, value] = pair.split('=');
+      query[key] = decodeURIComponent(value || '');
     });
-
-  } catch (err) {
-    return res.status(400).json({ error: err.message });
   }
+
+  const timestamp = Date.now();
+
+  res.json({
+    method,
+    path,
+    query,
+    httpVersion,
+    timestamp,
+    duration: `${Date.now() - timestamp}ms`
+  });
 };
 
-module.exports = { reqline };
+
+module.exports = {parseReqline}

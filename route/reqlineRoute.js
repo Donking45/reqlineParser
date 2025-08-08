@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const { reqline } = require('../controller/reqlineController')
+const { parseReqline } = require('../controller/reqlineController')
 
 
 
-router.post('/parse', reqline);
-router.get('/parse', reqline);
+router.post('/parse', parseReqline);
+router.get('/parse', parseReqline);
 
 module.exports = router;
