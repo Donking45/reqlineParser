@@ -6,7 +6,7 @@ const reqlineSchema = new mongoose.Schema({
     enum: ['GET', 'POST'],
     required: true,
   },
-  url: {
+  fullurl: {
     type: String,
     required: true,
   },
