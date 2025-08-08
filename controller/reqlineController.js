@@ -3,7 +3,7 @@ const Reqline = require('../model/reqlineModel');
 const reqline = async (req, res) => {
   const start = Date.now();
 
-  const { method, url, headers, query, body: requestBody } = req.body;
+  const { method, fullurl, headers, query, body: requestBody } = req.body;
 
   // Validate method
   if (!['GET', 'POST'].includes(method)) {
@@ -16,7 +16,7 @@ const reqline = async (req, res) => {
     // Save to DB
     const newReqline = new Reqline({
       method,
-      url,
+      fullurl,
       headers,
       query,
       body: requestBody,
