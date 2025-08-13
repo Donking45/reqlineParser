@@ -1,6 +1,7 @@
 const express = require('express')
 const mongoose = require("mongoose")
 const reqlineRoute = require("./route/reqlineRoute")
+const reverseGeocodeRoute = require("./route/reverseGeocodeRoute")
 
 const port = 3000
 const cors = require('cors')
@@ -19,6 +20,7 @@ app.use(express.json())
 
 
 app.use('/', reqlineRoute);
+app.use('/', reverseGeocodeRoute);
 
 
 
